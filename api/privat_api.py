@@ -4,8 +4,9 @@ from api import _Api
 
 
 def _find_rate(response_data, from_currency):
-    currency_map = {840: "USD", 643: "RUB"}
-    print(from_currency)
+    currency_map = {840: "USD", 643: "RUB", 1000: 'BTC'}
+    if from_currency not in currency_map:
+        raise ValueError(f"Invalid from_currency: {from_currency}")
     currency_alias = currency_map[from_currency]
     for e in response_data:
         if e["ccy"] == currency_alias:
@@ -23,7 +24,8 @@ class Api(_Api):
         return rate
 
     def _get_privat_rate(self, from_currency):
-        response = requests.get("https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11")
+        response = self._send_request(url="https://api.privatbank.ua/p24api/pubinfo?exchange&json&coursid=11",
+                                      method='get')
         response_json = response.json()
         self.log.debug(f'Privat answer: {response.text}')
         rate = _find_rate(response_json, from_currency)

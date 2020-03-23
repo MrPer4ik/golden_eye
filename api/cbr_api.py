@@ -9,7 +9,9 @@ def _find_rate(response_text, from_currency):
     root = ET.fromstring(response_text)
     valutes = root.findall("Valute")
 
-    cbr_valute_map = {840: "USD", 980: "UAH"}
+    cbr_valute_map = {840: "USD", 1000: 'BTC'}
+    if from_currency not in cbr_valute_map:
+        raise ValueError(f'Invalid from_currency: {from_currency}')
     currency_cbr_alias = cbr_valute_map[from_currency]
 
     for valute in valutes:
@@ -28,7 +30,7 @@ class Api(_Api):
         return rate
 
     def _get_cbr_rate(self, from_currency):
-        response = requests.get("http://www.cbr.ru/scripts/XML_daily.asp")
+        response = self._send_request(url="http://www.cbr.ru/scripts/XML_daily.asp", method='get')
         self.log.debug("response.encoding: %s" % response.encoding)
         response_text = response.text
         self.log.debug("response.text: %s" % response_text)
