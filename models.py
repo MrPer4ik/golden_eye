@@ -1,6 +1,7 @@
 from peewee import SqliteDatabase, Model, IntegerField, DoubleField, DateTimeField, datetime as peewee_datetime
+from config import DB_NAME
 
-db = SqliteDatabase("golden-eye.db")
+db = SqliteDatabase(DB_NAME)
 
 
 class XRate(Model):
