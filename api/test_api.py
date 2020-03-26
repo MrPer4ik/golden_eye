@@ -1,4 +1,3 @@
-from models import XRate, peewee_datetime
 from api import _Api
 
 

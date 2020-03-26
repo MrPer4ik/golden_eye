@@ -1,17 +1,15 @@
-import json
 import unittest
+import json
 from unittest.mock import patch
 
 import requests
 
-import api.test_api as test_api
-import api.privat_api as privat_api
-import api.cbr_api  as cbr_api
 import models
 import api
 
 
 def get_privat_response(*args, **kwargs):
+
     class Response:
         def __init__(self, response):
             self.text = json.dumps(response)
@@ -27,11 +25,12 @@ class Test(unittest.TestCase):
         models.init_db()
 
     def test_privat_usd(self):
+
         xrate = models.XRate.get(id=1)
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
-        privat_api.Api().update_rate(840, 980)
+        api.update_rate(840, 980)
 
         xrate = models.XRate.get(id=1)
         updated_after = xrate.updated
@@ -47,20 +46,13 @@ class Test(unittest.TestCase):
 
         self.assertIn('{"ccy":"USD","base_ccy":"UAH",', api_log.response_text)
 
-    def test_privat_currency_error(self):
-
-        xrate = models.XRate.get(id=1)
-        self.assertEqual(xrate.rate, 1.0)
-
-        self.assertRaises(ValueError, privat_api.Api().update_rate, 978, 980)
-
     def test_privat_btc(self):
 
         xrate = models.XRate.get(from_currency=1000, to_currency=840)
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
-        privat_api.Api().update_rate(1000, 840)
+        api.update_rate(1000, 840)
 
         xrate = models.XRate.get(from_currency=1000, to_currency=840)
         updated_after = xrate.updated
@@ -78,7 +70,7 @@ class Test(unittest.TestCase):
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
-        cbr_api.Api().update_rate(840, 643)
+        api.update_rate(840, 643)
 
         xrate = models.XRate.get(from_currency=840, to_currency=643)
         updated_after = xrate.updated
@@ -100,7 +92,7 @@ class Test(unittest.TestCase):
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
-        privat_api.Api().update_rate(840, 980)
+        api.update_rate(840, 980)
 
         xrate = models.XRate.get(id=1)
         updated_after = xrate.updated
@@ -122,7 +114,7 @@ class Test(unittest.TestCase):
         updated_before = xrate.updated
         self.assertEqual(xrate.rate, 1.0)
 
-        self.assertRaises(requests.exceptions.RequestException, privat_api.Api().update_rate, 840, 980)
+        self.assertRaises(requests.exceptions.RequestException, api.update_rate, 840, 980)
 
         xrate = models.XRate.get(id=1)
         updated_after = xrate.updated
@@ -145,6 +137,29 @@ class Test(unittest.TestCase):
         self.assertIn("Connection to api.privatbank.ua timed out", error_log.error)
 
         api.HTTP_TIMEOUT = 15
+
+    def test_cryptonator_uah(self):
+        from_currency = 1000
+        to_currency = 980
+        xrate = models.XRate.get(from_currency=from_currency, to_currency=to_currency)
+        updated_before = xrate.updated
+        self.assertEqual(xrate.rate, 1.0)
+
+        api.update_rate(from_currency, to_currency)
+
+        xrate = models.XRate.get(from_currency=from_currency, to_currency=to_currency)
+        updated_after = xrate.updated
+
+        self.assertGreater(xrate.rate, 150000)
+        self.assertGreater(updated_after, updated_before)
+
+        api_log = models.ApiLog.select().order_by(models.ApiLog.created.desc()).first()
+
+        self.assertIsNotNone(api_log)
+        self.assertEqual(api_log.request_url, "https://api.cryptonator.com/api/ticker/btc-uah")
+        self.assertIsNotNone(api_log.response_text)
+
+        self.assertIn('{"base":"BTC","target":"UAH","price":', api_log.response_text)
 
 
 if __name__ == '__main__':
