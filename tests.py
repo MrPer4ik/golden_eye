@@ -1,6 +1,8 @@
 import unittest
 import json
 from unittest.mock import patch
+import xml.etree.ElementTree as ET
+
 
 import requests
 import xmltodict
@@ -187,6 +189,18 @@ class Test(unittest.TestCase):
         json_rates = r.json()
         self.assertIsInstance(json_rates, list)
         self.assertEqual(len(json_rates), 2)
+
+    def test_html_xrates(self):
+        r = requests.get("http://localhost:5000/xrates")
+        self.assertTrue(r.ok)
+        self.assertIn('<table border="1">', r.text)
+        root = ET.fromstring(r.text)
+        body = root.find("body")
+        self.assertIsNotNone(body)
+        table = body.find("table")
+        self.assertIsNotNone(table)
+        rows = table.findall("tr")
+        self.assertEqual(len(rows), 5)
 
 
 if __name__ == '__main__':
