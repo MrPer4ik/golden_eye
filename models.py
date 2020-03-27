@@ -1,7 +1,7 @@
 from peewee import SqliteDatabase, Model, IntegerField, DoubleField, CharField, TextField, DateTimeField, datetime as peewee_datetime
-from config import DB_NAME
+import config
 
-db = SqliteDatabase(DB_NAME)
+db = SqliteDatabase(config.DB_NAME)
 
 
 class _Model(Model):

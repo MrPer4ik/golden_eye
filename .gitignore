@@ -2,3 +2,4 @@ venv/
 .idea/
 app.log
 __pycache__/
+new.log
